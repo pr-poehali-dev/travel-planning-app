@@ -4,7 +4,7 @@ import { ChatPanel } from '@/components/ChatPanel';
 import { PlaceDetailSheet } from '@/components/PlaceDetailSheet';
 import { Place, ChatMessage } from '@/types';
 import { Button } from '@/components/ui/button';
-import IconComponent from '@/components/ui/icon';
+import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 
 const initialPlaces: Place[] = [
@@ -145,7 +145,7 @@ export default function Index() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleShareTrip}>
-            <IconComponent name="Share2" size={16} />
+            <Icon name="Share2" size={16} />
             <span className="hidden sm:inline">Поделиться</span>
           </Button>
           <Button
@@ -154,7 +154,7 @@ export default function Index() {
             className="md:hidden"
             onClick={() => setIsMobileMapView(!isMobileMapView)}
           >
-            <IconComponent name={isMobileMapView ? 'MessageSquare' : 'Map'} size={16} />
+            <Icon name={isMobileMapView ? 'MessageSquare' : 'Map'} size={16} />
           </Button>
         </div>
       </header>
