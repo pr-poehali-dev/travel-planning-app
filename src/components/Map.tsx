@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
-import { useEffect, useRef, useState } from 'react';
+import { useState, useMemo } from 'react';
 
 interface MapProps {
   places: Place[];
@@ -21,9 +21,18 @@ const categoryColors: Record<string, string> = {
   transport: '#6B7280',
 };
 
+const categoryLabels: Record<string, string> = {
+  secret: 'Секретные места',
+  restaurant: 'Рестораны',
+  art: 'Искусство',
+  music: 'Музыка',
+  hotel: 'Отели',
+  transport: 'Транспорт',
+};
+
 export function Map({ places, userLocation, onPlaceClick, onDeletePlace }: MapProps) {
-  const mapRef = useRef<HTMLDivElement>(null);
   const [selectedMarker, setSelectedMarker] = useState<Place | null>(null);
+  const [zoom, setZoom] = useState(0.05);
 
   const handleMarkerClick = (place: Place) => {
     setSelectedMarker(place);
@@ -32,76 +41,69 @@ export function Map({ places, userLocation, onPlaceClick, onDeletePlace }: MapPr
   const centerLat = userLocation[0];
   const centerLng = userLocation[1];
 
+  const existingCategories = useMemo(() => {
+    const cats = new Set(places.map(p => p.category));
+    return Array.from(cats).filter(cat => categoryColors[cat]);
+  }, [places]);
+
+  const zoomIn = () => setZoom(prev => Math.max(prev * 0.7, 0.005));
+  const zoomOut = () => setZoom(prev => Math.min(prev * 1.3, 0.2));
+
   return (
-    <div className="h-full w-full relative bg-gray-100" ref={mapRef}>
-      {/* OpenStreetMap embed */}
+    <div className="h-full w-full relative bg-gray-100">
       <iframe
         width="100%"
         height="100%"
         frameBorder="0"
         scrolling="no"
         className="absolute inset-0"
-        src={`https://www.openstreetmap.org/export/embed.html?bbox=${centerLng - 0.05},${centerLat - 0.05},${centerLng + 0.05},${centerLat + 0.05}&layer=mapnik&marker=${centerLat},${centerLng}`}
+        src={`https://www.openstreetmap.org/export/embed.html?bbox=${centerLng - zoom},${centerLat - zoom},${centerLng + zoom},${centerLat + zoom}&layer=mapnik`}
       />
 
-      {/* Overlay with markers */}
-      <div className="absolute inset-0 pointer-events-none">
-        <svg width="100%" height="100%" className="pointer-events-auto">
-          {/* User location marker */}
-          <circle
-            cx="50%"
-            cy="50%"
-            r="12"
-            fill="#0EA5E9"
-            stroke="white"
-            strokeWidth="3"
-            className="drop-shadow-lg"
-          />
-          <circle
-            cx="50%"
-            cy="50%"
-            r="4"
-            fill="white"
-          />
-
-          {/* Place markers */}
-          {places.map((place, index) => {
-            const offsetX = (place.coords[1] - centerLng) * 2000;
-            const offsetY = -(place.coords[0] - centerLat) * 2000;
-            const x = `calc(50% + ${offsetX}px)`;
-            const y = `calc(50% + ${offsetY}px)`;
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+        <div className="relative w-full h-full">
+          {places.map((place) => {
+            const offsetX = ((place.coords[1] - centerLng) / (zoom * 2)) * 100;
+            const offsetY = (-(place.coords[0] - centerLat) / (zoom * 2)) * 100;
             const color = categoryColors[place.category] || '#0EA5E9';
 
             return (
-              <g key={place.id} onClick={() => handleMarkerClick(place)} className="cursor-pointer">
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="20"
-                  fill={color}
-                  stroke="white"
-                  strokeWidth="2"
-                  className="drop-shadow-lg hover:scale-110 transition-transform"
-                />
-                <text
-                  x={x}
-                  y={y}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize="16"
-                  className="pointer-events-none select-none"
+              <div
+                key={place.id}
+                className="absolute pointer-events-auto cursor-pointer hover:scale-110 transition-transform"
+                style={{
+                  left: `calc(50% + ${offsetX}%)`,
+                  top: `calc(50% + ${offsetY}%)`,
+                  transform: 'translate(-50%, -50%)',
+                }}
+                onClick={() => handleMarkerClick(place)}
+              >
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-lg border-2 border-white"
+                  style={{ backgroundColor: color }}
                 >
                   {place.emoji}
-                </text>
-              </g>
+                </div>
+              </div>
             );
           })}
-        </svg>
+
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            <div className="w-6 h-6 rounded-full bg-blue-500 border-4 border-white shadow-lg" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full" />
+          </div>
+        </div>
       </div>
 
-      {/* Selected marker popup */}
       {selectedMarker && (
-        <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 z-10">
+        <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 z-10 pointer-events-auto">
           <Card className="p-4 shadow-xl">
             <div className="space-y-3">
               <div className="flex items-start justify-between gap-2">
@@ -114,7 +116,7 @@ export function Map({ places, userLocation, onPlaceClick, onDeletePlace }: MapPr
                   )}
                 </div>
                 <Badge variant="secondary" className="shrink-0">
-                  {selectedMarker.category}
+                  {categoryLabels[selectedMarker.category] || selectedMarker.category}
                 </Badge>
               </div>
 
@@ -172,21 +174,41 @@ export function Map({ places, userLocation, onPlaceClick, onDeletePlace }: MapPr
         </div>
       )}
 
-      {/* Legend */}
-      <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-3 z-10">
-        <div className="space-y-2 text-xs">
-          <div className="font-semibold mb-2">Легенда</div>
-          {Object.entries(categoryColors).map(([category, color]) => (
-            <div key={category} className="flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: color }}
-              />
-              <span className="capitalize">{category}</span>
-            </div>
-          ))}
-        </div>
+      <div className="absolute top-4 left-4 flex flex-col gap-2 z-10 pointer-events-auto">
+        <Button
+          size="icon"
+          variant="secondary"
+          className="shadow-lg bg-white hover:bg-gray-100"
+          onClick={zoomIn}
+        >
+          <Icon name="Plus" size={20} />
+        </Button>
+        <Button
+          size="icon"
+          variant="secondary"
+          className="shadow-lg bg-white hover:bg-gray-100"
+          onClick={zoomOut}
+        >
+          <Icon name="Minus" size={20} />
+        </Button>
       </div>
+
+      {existingCategories.length > 0 && (
+        <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-3 z-10 pointer-events-auto">
+          <div className="space-y-2 text-xs">
+            <div className="font-semibold mb-2">Легенда</div>
+            {existingCategories.map((category) => (
+              <div key={category} className="flex items-center gap-2">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: categoryColors[category] }}
+                />
+                <span>{categoryLabels[category] || category}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
