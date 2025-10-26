@@ -56,7 +56,7 @@ export function Map({ places, userLocation, onPlaceClick, onDeletePlace }: MapPr
         height="100%"
         frameBorder="0"
         scrolling="no"
-        className="absolute inset-0"
+        className="absolute inset-0 pointer-events-none"
         src={`https://www.openstreetmap.org/export/embed.html?bbox=${centerLng - zoom},${centerLat - zoom},${centerLng + zoom},${centerLat + zoom}&layer=mapnik`}
       />
 
