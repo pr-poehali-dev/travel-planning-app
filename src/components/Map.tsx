@@ -4,7 +4,7 @@ import { Place } from '@/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import IconComponent from '@/components/ui/icon';
+import Icon from '@/components/ui/icon';
 import { useEffect } from 'react';
 
 interface MapProps {
@@ -34,27 +34,18 @@ function MapUpdater({ center }: { center: LatLngExpression }) {
 export function Map({ places, userLocation, onPlaceClick, onDeletePlace }: MapProps) {
   const createCustomIcon = (category: string, emoji: string) => {
     const color = categoryColors[category] || '#0EA5E9';
+    const svgContent = `<svg width="40" height="50" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg"><path d="M20 0C8.954 0 0 8.954 0 20c0 14 20 30 20 30s20-16 20-30C40 8.954 31.046 0 20 0z" fill="${color}" stroke="white" stroke-width="2"/><text x="20" y="24" font-size="16" text-anchor="middle" fill="white">${emoji}</text></svg>`;
     return new Icon({
-      iconUrl: `data:image/svg+xml;base64,${btoa(`
-        <svg width="40" height="50" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20 0C8.954 0 0 8.954 0 20c0 14 20 30 20 30s20-16 20-30C40 8.954 31.046 0 20 0z" 
-                fill="${color}" stroke="white" stroke-width="2"/>
-          <text x="20" y="24" font-size="16" text-anchor="middle" fill="white">${emoji}</text>
-        </svg>
-      `)}`,
+      iconUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`,
       iconSize: [40, 50],
       iconAnchor: [20, 50],
       popupAnchor: [0, -50],
     });
   };
 
+  const userSvg = `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#0EA5E9" stroke="white" stroke-width="3"/><circle cx="12" cy="12" r="4" fill="white"/></svg>`;
   const userIcon = new Icon({
-    iconUrl: `data:image/svg+xml;base64,${btoa(`
-      <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="10" fill="#0EA5E9" stroke="white" stroke-width="3"/>
-        <circle cx="12" cy="12" r="4" fill="white"/>
-      </svg>
-    `)}`,
+    iconUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(userSvg)}`,
     iconSize: [24, 24],
     iconAnchor: [12, 12],
   });
@@ -107,13 +98,13 @@ export function Map({ places, userLocation, onPlaceClick, onDeletePlace }: MapPr
                   <div className="flex gap-2 text-xs text-muted-foreground">
                     {place.price && (
                       <span className="flex items-center gap-1">
-                        <IconComponent name="DollarSign" size={12} />
+                        <Icon name="DollarSign" size={12} />
                         {place.price}
                       </span>
                     )}
                     {place.time && (
                       <span className="flex items-center gap-1">
-                        <IconComponent name="Clock" size={12} />
+                        <Icon name="Clock" size={12} />
                         {place.time}
                       </span>
                     )}
@@ -133,7 +124,7 @@ export function Map({ places, userLocation, onPlaceClick, onDeletePlace }: MapPr
                       variant="outline"
                       onClick={() => onDeletePlace(place.id)}
                     >
-                      <IconComponent name="Trash2" size={14} />
+                      <Icon name="Trash2" size={14} />
                     </Button>
                   </div>
                 </div>
